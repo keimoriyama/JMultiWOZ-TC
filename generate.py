@@ -1,9 +1,10 @@
-import json
 import argparse
-import httpx
+import json
 import time
 from pathlib import Path
-from openai import OpenAI, APITimeoutError
+
+import httpx
+from openai import APITimeoutError, OpenAI
 
 
 def load_tools(file_path):
@@ -179,13 +180,18 @@ def serialize_tool_calls(tool_calls) -> list:
     for tc in tool_calls:
         # 関数呼び出しがある場合のみシリアライズを必要とする
         if hasattr(tc, "function"):
-            args_dict = json.loads(tc.function.arguments)
-            serializable.append(
-                {
-                    "name": tc.function.name,
-                    "arguments": args_dict,
-                }
-            )
+            try:
+                args_dict = json.loads(tc.function.arguments)
+                serializable.append(
+                    {
+                        "name": tc.function.name,
+                        "arguments": args_dict,
+                    }
+                )
+            except:
+                serializable.append(
+                    {"name": tc.function.name, "arguments": tc.function.arguments}
+                )
         else:
             serializable.append(tc)
     return serializable
@@ -384,6 +390,7 @@ def main():
         )
 
     print(f"出力結果のJSONLを書き出しました: {output_path}\n")
+
 
 if __name__ == "__main__":
     main()
