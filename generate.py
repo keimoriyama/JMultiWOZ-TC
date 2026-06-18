@@ -14,7 +14,6 @@ def load_tools(file_path):
 
     Args:
         tools_path (Path): ツールJSONファイルのパス．
-
     Returns:
         list: ツール定義のリスト．
     """
@@ -180,22 +179,17 @@ def serialize_tool_calls(tool_calls) -> list:
     for tc in tool_calls:
         # 関数呼び出しがある場合のみシリアライズを必要とする
         if hasattr(tc, "function"):
-            try:
-                args_dict = json.loads(tc.function.arguments)
-                if not isinstance(args_dict, dict):
-                    raise ValueError(
-                        f"arguments が dict 型ではありません: {type(args_dict)}"
-                    )
-                serializable.append(
-                    {
-                        "name": tc.function.name,
-                        "arguments": args_dict,
-                    }
+            args_dict = json.loads(tc.function.arguments)
+            if not isinstance(args_dict, dict):
+                raise ValueError(
+                    f"arguments が dict 型ではありません: {type(args_dict)}"
                 )
-            except:
-                serializable.append(
-                    {"name": tc.function.name, "arguments": tc.function.arguments}
-                )
+            serializable.append(
+                {
+                    "name": tc.function.name,
+                    "arguments": args_dict,
+                }
+            )
         else:
             serializable.append(tc)
     return serializable
