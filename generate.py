@@ -182,6 +182,10 @@ def serialize_tool_calls(tool_calls) -> list:
         if hasattr(tc, "function"):
             try:
                 args_dict = json.loads(tc.function.arguments)
+                if not isinstance(args_dict, dict):
+                    raise ValueError(
+                        f"arguments が dict 型ではありません: {type(args_dict)}"
+                    )
                 serializable.append(
                     {
                         "name": tc.function.name,
@@ -305,8 +309,13 @@ def process_item(
         if response.choices[0].message.tool_calls
         else []
     )
-
-    serializable_tool_calls = serialize_tool_calls(tool_calls)
+    try:
+        serhializable_tool_calls = serialize_tool_calls(tool_calls)
+    except (json.JSONDecodeError, ValueError) as e:
+        llm_rec = build_error_record(data_id, dialogue_id, f"{type(e).__name__}: {e}")
+        append_jsonl_record(output_path, llm_rec)
+        print("-" * 80)
+        return
     log_tool_calls(serializable_tool_calls)
 
     llm_rec = build_success_record(
